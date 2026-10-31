@@ -1,4 +1,4 @@
-import { GAME } from '../config';
+import { BONUS_SLOT, GAME } from '../config';
 import type { Container, FederatedPointerEvent } from 'pixi.js';
 import type { GameState } from './GameState';
 import type { ChargeState, PlayerId } from './types';
@@ -13,9 +13,11 @@ const KEY_BINDINGS: Record<string, [PlayerId, number]> = {
   Digit1: ['p1', 0],
   Digit2: ['p1', 1],
   Digit3: ['p1', 2],
+  Digit4: ['p1', BONUS_SLOT],
   Digit7: ['p2', 0],
   Digit8: ['p2', 1],
   Digit9: ['p2', 2],
+  Digit0: ['p2', BONUS_SLOT],
 };
 
 export class InputManager {
@@ -46,6 +48,23 @@ export class InputManager {
     });
   }
 
+  /** 将挂机增援色块绑定为可长按的输入区域 */
+  bindBonus(container: Container, owner: PlayerId): void {
+    container.eventMode = 'static';
+    container.cursor = 'pointer';
+    container.on('pointerdown', (event: FederatedPointerEvent) => {
+      if (!this.game.bonusReady(owner)) return;
+      this.start(`pointer:${event.pointerId}`, owner, BONUS_SLOT);
+    });
+    container.on('pointerout', (event: FederatedPointerEvent) => {
+      const key = `pointer:${event.pointerId}`;
+      const source = this.sources.get(key);
+      if (source && source.owner === owner && source.slot === BONUS_SLOT) {
+        this.stopSource(key);
+      }
+    });
+  }
+
   update(dt: number): void {
     if (this.game.phase !== 'playing') {
       this.sources.clear();
@@ -53,11 +72,22 @@ export class InputManager {
       return;
     }
 
-    for (const source of this.sources.values()) {
+    for (const [key, source] of [...this.sources]) {
+      if (source.slot === BONUS_SLOT && !this.game.bonusReady(source.owner)) {
+        this.stopSource(key);
+        continue;
+      }
       source.elapsed += dt;
       while (source.elapsed >= GAME.chargeTime) {
         source.elapsed -= GAME.chargeTime;
-        this.game.spawn(source.owner, source.slot);
+        const spawned =
+          source.slot === BONUS_SLOT
+            ? this.game.spawnBonus(source.owner)
+            : this.game.spawn(source.owner, source.slot);
+        if (!spawned && source.slot === BONUS_SLOT) {
+          this.stopSource(key);
+          break;
+        }
       }
     }
   }
@@ -78,6 +108,7 @@ export class InputManager {
 
   private start(key: string, owner: PlayerId, slot: number): void {
     if (this.game.phase !== 'playing') return;
+    if (slot === BONUS_SLOT && !this.game.bonusReady(owner)) return;
     if (this.sources.has(key)) return;
 
     const previous = this.activePlayerSource[owner];

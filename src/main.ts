@@ -23,7 +23,7 @@ async function bootstrap(): Promise<void> {
 
   const game = new GameState();
   const input = new InputManager(game);
-  scene.bindCards(input);
+  scene.bindInputs(input);
 
   const resize = (): void => {
     const scale = Math.min(

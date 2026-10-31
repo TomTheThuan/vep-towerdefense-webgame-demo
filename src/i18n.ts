@@ -4,6 +4,7 @@ type MessageKey =
   | 'title'
   | 'baseLabel'
   | 'stat'
+  | 'bonusLabel'
   | 'hintP1'
   | 'hintP2'
   | 'footer'
@@ -17,8 +18,9 @@ const MESSAGES: Record<Locale, Record<MessageKey, string>> = {
     title: 'Neuro Tower Defense · VEP Attention Battle',
     baseLabel: '{player} BASE   HP {hp}',
     stat: 'HP {hp} · DMG {damage}',
-    hintP1: 'P1 · Hold mouse or keys 1 / 2 / 3',
-    hintP2: 'P2 · Hold mouse or keys 7 / 8 / 9',
+    bonusLabel: 'REINFORCEMENT',
+    hintP1: 'P1 · Hold mouse or 1 / 2 / 3 · 4 = reinforcement',
+    hintP2: 'P2 · Hold mouse or 7 / 8 / 9 · 0 = reinforcement',
     footer: 'F flicker · D frequency labels · R restart',
     winner: '{player} WINS',
     restart: 'Press R to restart',
@@ -27,8 +29,9 @@ const MESSAGES: Record<Locale, Record<MessageKey, string>> = {
     title: '神经塔防 · VEP 注意力对战',
     baseLabel: '{player} 据点   HP {hp}',
     stat: '生命 {hp} · 伤害 {damage}',
-    hintP1: 'P1 · 按住鼠标或键 1 / 2 / 3',
-    hintP2: 'P2 · 按住鼠标或键 7 / 8 / 9',
+    bonusLabel: '增援',
+    hintP1: 'P1 · 按住鼠标或键 1 / 2 / 3 · 4 为增援',
+    hintP2: 'P2 · 按住鼠标或键 7 / 8 / 9 · 0 为增援',
     footer: 'F 闪烁开关 · D 频率标签 · R 重新开始',
     winner: '{player} 胜利',
     restart: '按 R 重新开始',

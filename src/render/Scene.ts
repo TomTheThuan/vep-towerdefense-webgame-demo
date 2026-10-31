@@ -1,9 +1,10 @@
 import { Container, Graphics, Text } from 'pixi.js';
-import { CARD_DEFS, DESIGN, FEEDBACK, GAME, LAYOUT, PLAYER_LABEL } from '../config';
+import { BONUS_SLOT, CARD_DEFS, DESIGN, FEEDBACK, GAME, LAYOUT, PLAYER_LABEL } from '../config';
 import { t } from '../i18n';
 import type { GameEvent, PlayerId } from '../game/types';
 import type { GameState } from '../game/GameState';
 import type { InputManager } from '../game/InputManager';
+import { BonusBlock } from './BonusBlock';
 import { CardView } from './CardView';
 import { UnitView } from './UnitView';
 import { CameraShake } from './CameraShake';
@@ -40,6 +41,7 @@ export class Scene {
   private unitViews = new Map<number, UnitView>();
   private cards: CardView[] = [];
   private baseViews!: Record<PlayerId, BaseView>;
+  private bonusBlocks!: Record<PlayerId, BonusBlock>;
 
   private shake = new CameraShake();
   private overlay = new Overlay();
@@ -58,8 +60,9 @@ export class Scene {
     this.buildUi();
   }
 
-  bindCards(input: InputManager): void {
+  bindInputs(input: InputManager): void {
     for (const card of this.cards) input.bindCard(card, card.owner, card.slot);
+    for (const player of PLAYERS) input.bindBonus(this.bonusBlocks[player], player);
   }
 
   toggleFlicker(): void {
@@ -78,6 +81,7 @@ export class Scene {
     for (const player of PLAYERS) {
       this.baseViews[player].flashLife = 0;
       this.baseViews[player].flash.alpha = 0;
+      this.bonusBlocks[player].resetFlash();
     }
   }
 
@@ -92,6 +96,12 @@ export class Scene {
     const flicker = this.flickerEnabled && game.phase !== 'gameover';
     for (const card of this.cards) {
       card.update(dt, charges.get(`${card.owner}:${card.slot}`) ?? 0, flicker, this.debugLabels);
+    }
+
+    for (const player of PLAYERS) {
+      const block = this.bonusBlocks[player];
+      block.visible = game.phase === 'playing' && game.bonusReady(player);
+      block.update(dt, charges.get(`${player}:${BONUS_SLOT}`) ?? 0, flicker, this.debugLabels);
     }
 
     this.syncUnits(game);
@@ -185,6 +195,13 @@ export class Scene {
         this.cardLayer.addChild(card);
       }
     }
+
+    this.bonusBlocks = {} as Record<PlayerId, BonusBlock>;
+    for (const player of PLAYERS) {
+      const block = new BonusBlock(player);
+      this.bonusBlocks[player] = block;
+      this.cardLayer.addChild(block);
+    }
   }
 
   private buildUi(): void {
@@ -264,6 +281,10 @@ export class Scene {
     switch (event.type) {
       case 'spawn': {
         this.shake.add(FEEDBACK.trauma.spawn);
+        if (event.bonus) {
+          this.bonusBlocks[event.owner].flash();
+          break;
+        }
         const card = this.cards.find(
           (item) => item.owner === event.owner && item.slot === event.slot,
         );

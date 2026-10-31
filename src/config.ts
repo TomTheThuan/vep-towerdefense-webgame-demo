@@ -12,7 +12,14 @@ export const GAME = {
   knockback: 16,
   unitW: 16,
   unitH: 30,
+  bonusIdle: 20,
+  bonusFreq: 15.0,
+  bonusHp: 5,
+  bonusDamage: 1,
 } as const;
+
+/** 增援色块使用的伪槽位，避免与卡牌 0..2 冲突 */
+export const BONUS_SLOT = -1;
 
 export interface CardDef {
   hp: number;
@@ -50,6 +57,10 @@ export const LAYOUT = {
     y: 500,
     xs: { p1: [120, 292, 464], p2: [668, 840, 1012] } as Record<PlayerId, number[]>,
   },
+  bonus: {
+    p1: { x: 20, y: 14, w: 340, h: 86 },
+    p2: { x: 920, y: 14, w: 340, h: 86 },
+  } as Record<PlayerId, { x: number; y: number; w: number; h: number }>,
 };
 
 export const FEEDBACK = {

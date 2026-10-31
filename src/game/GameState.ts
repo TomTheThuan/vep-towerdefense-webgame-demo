@@ -1,4 +1,4 @@
-import { CARD_DEFS, GAME, LAYOUT } from '../config';
+import { CARD_DEFS, GAME, LAYOUT, BONUS_SLOT } from '../config';
 import type { GameEvent, Phase, PlayerId, Unit } from './types';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -9,6 +9,7 @@ export class GameState {
   bases: Record<PlayerId, number> = { p1: GAME.baseHp, p2: GAME.baseHp };
   units: Unit[] = [];
   winner: PlayerId | null = null;
+  idleTime: Record<PlayerId, number> = { p1: 0, p2: 0 };
 
   private events: GameEvent[] = [];
   private nextId = 1;
@@ -21,6 +22,12 @@ export class GameState {
     this.winner = null;
     this.events = [];
     this.nextId = 1;
+    this.idleTime = { p1: 0, p2: 0 };
+  }
+
+  /** 距离该玩家上一次出兵是否已超过挂机阈值，增援色块据此显示 */
+  bonusReady(owner: PlayerId): boolean {
+    return this.idleTime[owner] >= GAME.bonusIdle;
   }
 
   spawn(owner: PlayerId, slot: number): boolean {
@@ -28,6 +35,7 @@ export class GameState {
     const def = CARD_DEFS[owner][slot];
     if (!def) return false;
 
+    this.idleTime[owner] = 0;
     const unit: Unit = {
       id: this.nextId++,
       owner,
@@ -42,6 +50,32 @@ export class GameState {
     return true;
   }
 
+  /** 挂机 20 秒后的增援：5HP / 1DMG 单位 */
+  spawnBonus(owner: PlayerId): boolean {
+    if (this.phase !== 'playing') return false;
+    if (!this.bonusReady(owner)) return false;
+
+    this.idleTime[owner] = 0;
+    const unit: Unit = {
+      id: this.nextId++,
+      owner,
+      x: LAYOUT.spawnX[owner],
+      hp: GAME.bonusHp,
+      maxHp: GAME.bonusHp,
+      damage: GAME.bonusDamage,
+      attackCd: 0,
+    };
+    this.units.push(unit);
+    this.events.push({
+      type: 'spawn',
+      owner,
+      slot: BONUS_SLOT,
+      unitId: unit.id,
+      bonus: true,
+    });
+    return true;
+  }
+
   update(dt: number): void {
     if (this.phase === 'countdown') {
       this.countdown -= dt;
@@ -52,6 +86,9 @@ export class GameState {
       return;
     }
     if (this.phase !== 'playing') return;
+
+    this.idleTime.p1 += dt;
+    this.idleTime.p2 += dt;
 
     for (const unit of this.units) {
       unit.attackCd = Math.max(0, unit.attackCd - dt);
