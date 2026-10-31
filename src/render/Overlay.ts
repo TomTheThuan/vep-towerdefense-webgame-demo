@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { DESIGN, PLAYER_LABEL } from '../config';
+import { t } from '../i18n';
 import { FONT_FAMILY, PALETTE, PLAYER_COLORS } from './palette';
 import type { GameState } from '../game/GameState';
 
@@ -34,7 +35,7 @@ export class Overlay {
     this.winner.visible = false;
 
     this.restart = new Text({
-      text: '按 R 重新开始',
+      text: t('restart'),
       style: { fontFamily: FONT_FAMILY, fontSize: 18, fill: PALETTE.dim },
     });
     this.restart.anchor.set(0.5);
@@ -42,20 +43,20 @@ export class Overlay {
     this.restart.visible = false;
 
     const left = new Text({
-      text: 'P1 · 按住鼠标或键 1 / 2 / 3',
+      text: t('hintP1'),
       style: { fontFamily: FONT_FAMILY, fontSize: 13, fill: PALETTE.dim },
     });
     left.position.set(120, 654);
 
     const right = new Text({
-      text: 'P2 · 按住鼠标或键 7 / 8 / 9',
+      text: t('hintP2'),
       style: { fontFamily: FONT_FAMILY, fontSize: 13, fill: PALETTE.dim },
     });
     right.anchor.set(1, 0);
     right.position.set(1160, 654);
 
     const foot = new Text({
-      text: 'F 闪烁开关 · D 频率标签 · R 重新开始',
+      text: t('footer'),
       style: { fontFamily: FONT_FAMILY, fontSize: 12, fill: PALETTE.dim },
     });
     foot.anchor.set(0.5, 0);
@@ -88,7 +89,7 @@ export class Overlay {
 
     if (over && game.winner) {
       const color = PLAYER_COLORS[game.winner].bright;
-      this.winner.text = `${PLAYER_LABEL[game.winner]} 胜利`;
+      this.winner.text = t('winner', { player: PLAYER_LABEL[game.winner] });
       this.winner.style.fill = color;
     }
   }

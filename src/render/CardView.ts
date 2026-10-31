@@ -1,5 +1,6 @@
 import { Container, Graphics, Rectangle, Text } from 'pixi.js';
 import { LAYOUT, type CardDef } from '../config';
+import { t } from '../i18n';
 import { FONT_FAMILY, PALETTE, PLAYER_COLORS } from './palette';
 import type { PlayerId } from '../game/types';
 
@@ -10,7 +11,7 @@ export class CardView extends Container {
   private w = LAYOUT.card.w;
   private h = LAYOUT.card.h;
   private tabH = LAYOUT.card.tabH;
-  private freq: number;
+  private freqValue: number;
 
   private onLayer: Graphics;
   private offLayer: Graphics;
@@ -26,7 +27,7 @@ export class CardView extends Container {
     super();
     this.owner = owner;
     this.slot = slot;
-    this.freq = def.freq;
+    this.freqValue = def.freq;
     this.position.set(x, y);
 
     const colors = PLAYER_COLORS[owner];
@@ -50,7 +51,7 @@ export class CardView extends Container {
       .fill({ color: colors.main, alpha: 0.95 });
 
     const stat = new Text({
-      text: `生命 ${def.hp} · 伤害 ${def.damage}`,
+      text: t('stat', { hp: def.hp, damage: def.damage }),
       style: { fontFamily: FONT_FAMILY, fontSize: 13, fill: PALETTE.text },
     });
     stat.position.set(20, -this.tabH + 5);
@@ -84,13 +85,22 @@ export class CardView extends Container {
     this.hitArea = new Rectangle(0, -this.tabH, this.w, this.h + this.tabH);
   }
 
+  get frequency(): number {
+    return this.freqValue;
+  }
+
+  setFrequency(freq: number): void {
+    this.freqValue = freq;
+    this.freqLabel.text = `${freq.toFixed(2)} Hz`;
+  }
+
   flash(): void {
     this.flashLife = 0.25;
   }
 
   update(dt: number, progress: number, flicker: boolean, debug: boolean): void {
     this.t += dt;
-    const on = Math.floor(this.t * this.freq * 2) % 2 === 0;
+    const on = Math.floor(this.t * this.freqValue * 2) % 2 === 0;
     this.onLayer.visible = !flicker || on;
     this.offLayer.visible = flicker && !on;
 

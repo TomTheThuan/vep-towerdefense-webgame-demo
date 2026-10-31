@@ -2,9 +2,12 @@ import { Application } from 'pixi.js';
 import { DESIGN } from './config';
 import { GameState } from './game/GameState';
 import { InputManager } from './game/InputManager';
+import { applyDocumentLocale } from './i18n';
 import { Scene } from './render/Scene';
 
 async function bootstrap(): Promise<void> {
+  applyDocumentLocale();
+
   const app = new Application();
   await app.init({
     background: 0x0e0f12,

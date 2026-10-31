@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { CARD_DEFS, DESIGN, FEEDBACK, GAME, LAYOUT, PLAYER_LABEL } from '../config';
+import { t } from '../i18n';
 import type { GameEvent, PlayerId } from '../game/types';
 import type { GameState } from '../game/GameState';
 import type { InputManager } from '../game/InputManager';
@@ -100,7 +101,13 @@ export class Scene {
     this.screenFlashAlpha = Math.max(0, this.screenFlashAlpha - FEEDBACK.screenFlashDecay * dt);
     this.screenFlash.alpha = this.screenFlashAlpha;
 
-    for (const event of game.drainEvents()) this.handleEvent(event);
+    for (const event of game.drainEvents()) {
+      this.handleEvent(event);
+      if (event.type === 'spawn') {
+        input.cancelPlayer(event.owner);
+        this.shuffleCards(event.owner);
+      }
+    }
 
     this.overlay.update(game);
   }
@@ -212,7 +219,7 @@ export class Scene {
     const view = this.baseViews[player];
     if (view.hp !== game.bases[player]) {
       view.hp = game.bases[player];
-      view.label.text = `${PLAYER_LABEL[player]} 据点   HP ${view.hp}`;
+      view.label.text = t('baseLabel', { player: PLAYER_LABEL[player], hp: view.hp });
 
       const width = LAYOUT.base[player].w;
       const ratio = Math.max(0, view.hp / GAME.baseHp);
@@ -225,6 +232,32 @@ export class Scene {
 
     view.flashLife = Math.max(0, view.flashLife - dt);
     view.flash.alpha = (view.flashLife / 0.18) * 0.35;
+  }
+
+  private shuffleCards(player: PlayerId): void {
+    const views = this.cards.filter((card) => card.owner === player);
+    const positions = this.shuffle([...LAYOUT.card.xs[player]]);
+    const frequencies = this.shuffle(CARD_DEFS[player].map((def) => def.freq));
+
+    if (positions.every((x, i) => x === views[i].position.x)) {
+      [positions[0], positions[1]] = [positions[1], positions[0]];
+    }
+    if (frequencies.every((freq, i) => freq === views[i].frequency)) {
+      [frequencies[0], frequencies[1]] = [frequencies[1], frequencies[0]];
+    }
+
+    for (let i = 0; i < views.length; i++) {
+      views[i].position.x = positions[i];
+      views[i].setFrequency(frequencies[i]);
+    }
+  }
+
+  private shuffle<T>(items: T[]): T[] {
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
   }
 
   private handleEvent(event: GameEvent): void {

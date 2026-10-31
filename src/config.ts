@@ -6,7 +6,7 @@ export const GAME = {
   baseHp: 10,
   chargeTime: 1.5,
   countdown: 3,
-  unitSpeed: 100,
+  unitSpeed: 20,
   engageRange: 36,
   exchangeInterval: 0.6,
   knockback: 16,
@@ -22,14 +22,14 @@ export interface CardDef {
 
 export const CARD_DEFS: Record<PlayerId, readonly CardDef[]> = {
   p1: [
-    { hp: 1, damage: 1, freq: 5.0 },
-    { hp: 2, damage: 1, freq: 6.67 },
-    { hp: 2, damage: 2, freq: 8.57 },
+    { hp: 1, damage: 1, freq: 10.0 },
+    { hp: 2, damage: 1, freq: 7.0 },
+    { hp: 2, damage: 2, freq: 5.0 },
   ],
   p2: [
     { hp: 1, damage: 1, freq: 10.0 },
-    { hp: 2, damage: 1, freq: 12.0 },
-    { hp: 2, damage: 2, freq: 15.0 },
+    { hp: 2, damage: 1, freq: 7.0 },
+    { hp: 2, damage: 2, freq: 5.0 },
   ],
 };
 

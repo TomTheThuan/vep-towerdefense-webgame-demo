@@ -70,6 +70,12 @@ export class InputManager {
     }));
   }
 
+  /** 取消某玩家当前的充能，用于卡牌洗牌后强制重新锁定 */
+  cancelPlayer(owner: PlayerId): void {
+    const key = this.activePlayerSource[owner];
+    if (key) this.stopSource(key);
+  }
+
   private start(key: string, owner: PlayerId, slot: number): void {
     if (this.game.phase !== 'playing') return;
     if (this.sources.has(key)) return;
